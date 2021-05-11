@@ -1,0 +1,3 @@
+# ddbmodel
+
+Wraper of DynamoDB
