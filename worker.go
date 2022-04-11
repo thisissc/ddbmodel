@@ -26,8 +26,6 @@ type Worker struct {
 	ProjectionAttrs  []string
 }
 
-type Workers []Worker
-
 func NewWorker(sess *session.Session, tableName string) *Worker {
 	return &Worker{
 		AwsSession: sess,
@@ -495,7 +493,7 @@ func (w *Worker) UpdateByExpression(expr expression.Expression) error {
 	return nil
 }
 
-func (w *Worker) ToUpdateItem(data map[string]interface{}) (item dynamodb.Update, err error) {
+func (w *Worker) ToUpdateItem(action string, data map[string]interface{}) (item dynamodb.Update, err error) {
 	key, marshalErr := dynamodbattribute.MarshalMap(w.InputKey)
 	if marshalErr != nil {
 		err = errors.Wrap(marshalErr, "MarshalMap error")
@@ -503,11 +501,20 @@ func (w *Worker) ToUpdateItem(data map[string]interface{}) (item dynamodb.Update
 	}
 	update := expression.UpdateBuilder{}
 	for k, v := range data {
-		update = update.Set(
-			expression.Name(k),
-			expression.Value(v),
-		)
+		switch action {
+		case "Set":
+			update = update.Set(
+				expression.Name(k),
+				expression.Value(v),
+			)
+		case "Add":
+			update = update.Add(
+				expression.Name(k),
+				expression.Value(v),
+			)
+		}
 	}
+
 	expr, buildErr := expression.NewBuilder().
 		WithUpdate(update).
 		Build()
