@@ -15,7 +15,7 @@ import (
 )
 
 type Worker struct {
-	Client           dynamodb.Client
+	Client           *dynamodb.Client
 	TableName        string
 	IndexName        string
 	InputKey         map[string]interface{}
@@ -27,7 +27,7 @@ type Worker struct {
 	ProjectionAttrs  []string
 }
 
-func NewWorker(client dynamodb.Client) *Worker {
+func NewWorker(client *dynamodb.Client) *Worker {
 	return &Worker{
 		Client: client,
 	}
