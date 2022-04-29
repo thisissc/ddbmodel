@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-func DynamoDB() *dynamodb.Client {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func DynamoDB(ctx context.Context) *dynamodb.Client {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatalf("failed to load configuration, %v", err)
 	}

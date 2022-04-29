@@ -15,6 +15,7 @@ import (
 )
 
 type Worker struct {
+	ctx              context.Context
 	Client           *dynamodb.Client
 	TableName        string
 	IndexName        string
@@ -27,8 +28,9 @@ type Worker struct {
 	ProjectionAttrs  []string
 }
 
-func NewWorker(client *dynamodb.Client) *Worker {
+func NewWorker(ctx context.Context, client *dynamodb.Client) *Worker {
 	return &Worker{
+		ctx:    ctx,
 		Client: client,
 	}
 }
@@ -101,7 +103,7 @@ func (w *Worker) Save(obj interface{}) error {
 		return errors.Wrap(err, "attributevalue marshal failed")
 	}
 
-	_, err = w.Client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = w.Client.PutItem(w.ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(w.TableName),
 		Item:      av,
 	})
@@ -133,7 +135,7 @@ func (w *Worker) BatchSave(items []interface{}) error {
 		},
 	}
 
-	_, err := w.Client.BatchWriteItem(context.TODO(), input)
+	_, err := w.Client.BatchWriteItem(w.ctx, input)
 	if err != nil {
 		return errors.Wrap(err, "dynamodb BatchWriteItem failed")
 	}
@@ -152,7 +154,7 @@ func (w *Worker) Delete() error {
 		TableName: aws.String(w.TableName),
 	}
 
-	_, err = w.Client.DeleteItem(context.TODO(), input)
+	_, err = w.Client.DeleteItem(w.ctx, input)
 	if err != nil {
 		return errors.Wrap(err, "Delete item error")
 	}
@@ -172,7 +174,7 @@ func (w *Worker) Get(dst interface{}) error {
 		ConsistentRead: aws.Bool(w.IsConsistentRead),
 	}
 
-	result, err := w.Client.GetItem(context.TODO(), input)
+	result, err := w.Client.GetItem(w.ctx, input)
 	if err != nil {
 		return errors.Wrap(err, "Get item error")
 	}
@@ -225,7 +227,7 @@ func (w *Worker) BatchGet(pkName string, ids []string, itemList interface{}) err
 		},
 	}
 
-	resp, err := w.Client.BatchGetItem(context.TODO(), input)
+	resp, err := w.Client.BatchGetItem(w.ctx, input)
 
 	if err != nil {
 		log.Println(err)
@@ -306,7 +308,7 @@ func (w *Worker) QueryByExpression(expr expression.Expression, itemList interfac
 
 	offset := ""
 
-	result, err := w.Client.Query(context.TODO(), input)
+	result, err := w.Client.Query(w.ctx, input)
 	if err != nil {
 		return offset, errors.Wrap(err, "Query item list failed")
 	}
@@ -383,7 +385,7 @@ func (w *Worker) Scan(itemList interface{}) (string, error) {
 
 	offset := ""
 
-	result, err := w.Client.Scan(context.TODO(), input)
+	result, err := w.Client.Scan(w.ctx, input)
 	if err != nil {
 		return offset, errors.Wrap(err, "Scan item list failed")
 	}
@@ -485,7 +487,7 @@ func (w *Worker) UpdateByExpression(expr expression.Expression) error {
 		TableName:                 aws.String(w.TableName),
 	}
 
-	_, err = w.Client.UpdateItem(context.TODO(), input)
+	_, err = w.Client.UpdateItem(w.ctx, input)
 	if err != nil {
 		return errors.Wrap(err, "Query item list failed")
 	}

@@ -1,6 +1,8 @@
 package uglymodel
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/pkg/errors"
 	ddbmodel "github.com/thisissc/ddbmodel/v2"
@@ -17,24 +19,26 @@ type FindInput struct {
 }
 
 type UglyDao struct {
+	ctx    context.Context
 	Client *dynamodb.Client
 }
 
-func NewDao(client *dynamodb.Client) UglyDao {
+func NewDao(ctx context.Context, client *dynamodb.Client) UglyDao {
 	return UglyDao{
+		ctx:    ctx,
 		Client: client,
 	}
 }
 
 func (dao *UglyDao) Save(item interface{}) error {
-	dmw := ddbmodel.NewWorker(dao.Client).
+	dmw := ddbmodel.NewWorker(dao.ctx, dao.Client).
 		Table(TableName)
 
 	return dmw.Save(item)
 }
 
 func (dao *UglyDao) Delete(id string) error {
-	dmw := ddbmodel.NewWorker(dao.Client).
+	dmw := ddbmodel.NewWorker(dao.ctx, dao.Client).
 		Table(TableName).
 		Key("ID", id)
 
@@ -42,7 +46,7 @@ func (dao *UglyDao) Delete(id string) error {
 }
 
 func (dao *UglyDao) Get(id string, item interface{}) error {
-	dmw := ddbmodel.NewWorker(dao.Client).
+	dmw := ddbmodel.NewWorker(dao.ctx, dao.Client).
 		Table(TableName).
 		Key("ID", id)
 
@@ -59,7 +63,7 @@ func (dao *UglyDao) Find(input FindInput, itemList interface{}) error {
 		params["UglyId"] = input.UglyId
 	}
 
-	dmw := ddbmodel.NewWorker(dao.Client).
+	dmw := ddbmodel.NewWorker(dao.ctx, dao.Client).
 		Table(TableName).
 		Index(GroupIndexName).
 		Keys(params)
