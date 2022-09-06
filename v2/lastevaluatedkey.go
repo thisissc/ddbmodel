@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
@@ -12,7 +13,9 @@ func EncodeLastEvaluatedKey(data map[string]types.AttributeValue) string {
 		return ""
 	}
 
-	esKeyByte, _ := json.Marshal(data)
+	var mapData map[string]interface{}
+	attributevalue.UnmarshalMap(data, &mapData)
+	esKeyByte, _ := json.Marshal(mapData)
 	encoded := base64.StdEncoding.EncodeToString(esKeyByte)
 	return encoded
 }
@@ -21,9 +24,13 @@ func DecodeLastEvaluatedKey(data string) map[string]types.AttributeValue {
 	decodedData, err := base64.StdEncoding.DecodeString(data)
 	if err == nil {
 		var esKey map[string]types.AttributeValue
-		err = json.Unmarshal([]byte(decodedData), &esKey)
+		var mapData map[string]interface{}
+		err = json.Unmarshal([]byte(decodedData), &mapData)
 		if err == nil {
-			return esKey
+			esKey, err = attributevalue.MarshalMap(mapData)
+			if err == nil {
+				return esKey
+			}
 		}
 	}
 
