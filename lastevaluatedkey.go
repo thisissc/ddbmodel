@@ -58,22 +58,22 @@ func newLastKey(attrVal *dynamodb.AttributeValue) *lastKey {
 	}
 
 	if attrVal.L != nil {
-		valList := make([]*lastKey, len(attrVal.L))
-		for i, val := range attrVal.L {
-			valList[i] = newLastKey(val)
-		}
-		newVal.L = valList
+		newVal.L = lastKeyList(attrVal.L)
 	}
 
 	if attrVal.M != nil {
-		valMap := make(map[string]*lastKey)
-		for key, val := range attrVal.M {
-			valMap[key] = newLastKey(val)
-		}
-		newVal.M = valMap
+		newVal.M = lastKeyMap(attrVal.M)
 	}
 
 	return &newVal
+}
+
+func lastKeyList(data []*dynamodb.AttributeValue) []*lastKey {
+	valList := make([]*lastKey, len(data))
+	for i, val := range data {
+		valList[i] = newLastKey(val)
+	}
+	return valList
 }
 
 func lastKeyMap(data map[string]*dynamodb.AttributeValue) map[string]*lastKey {
